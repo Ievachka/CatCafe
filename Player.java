@@ -5,7 +5,7 @@ public class Player {
 
     public Player() {
         username = "";
-        tutorialCompleted = false;
+        tutorialCompleted = true;
     }
 
     public void setUsername(String username) {
@@ -28,5 +28,10 @@ public class Player {
 
     public boolean isTutorialCompleted() {
         return tutorialCompleted;
+    }
+
+    public void declineJob() {
+        tutorialCompleted = false;
+        System.out.println("\n --- Maybe next time! Goodbye! ---");
     }
 }

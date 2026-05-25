@@ -45,10 +45,6 @@ public class TutorialManager {
 
         handleBossDialog();
 
-        if (player.isTutorialCompleted()) {
-            return;
-        }
-
         if (!player.isTutorialCompleted()) {
             return;
         }
@@ -59,7 +55,7 @@ public class TutorialManager {
         }
 
         handleBossSecondChoice();
-        if (player.isTutorialCompleted()) {
+        if (!player.isTutorialCompleted()) {
             return;
         }
 
@@ -68,8 +64,8 @@ public class TutorialManager {
             boss.nextDialog();
         }
 
-        player.completeTutorial();
-
+        GameplayManager gameplayManager = new GameplayManager(scanner,player);
+        gameplayManager.playTutorial();
     }
 
     private void handleBossDialog() {
@@ -105,7 +101,7 @@ public class TutorialManager {
                     e.printStackTrace();
                 }
 
-                player.incompleteTutorial();
+                player.declineJob();
                 return;
             }
         }
@@ -144,7 +140,7 @@ public class TutorialManager {
                     e.printStackTrace();
                 }
 
-                player.incompleteTutorial();
+                player.declineJob();
                 return;
             }
         }
