@@ -15,10 +15,15 @@ public class GameplayManager {
     }
 
     private void initializeMenu() {
-        menu.add(new MenuItem("Latte", "☕\uFE0F"));
-        menu.add(new MenuItem("Cookie", "\uD83C\uDF6A"));
-        menu.add(new MenuItem("Green tea", "\uD83C\uDF75"));
-        menu.add(new MenuItem("Strawberry cupcake", "\uD83E\uDDC1"));
+        menu.add(new MenuItem("Latte", "☕"));
+        menu.add(new MenuItem("Espresso", "☕"));
+        menu.add(new MenuItem("Capucino", "☕"));
+
+        menu.add(new MenuItem("Cookie", "🍪"));
+        menu.add(new MenuItem("Brownie", "🍫"));
+
+        menu.add(new MenuItem("Green tea", "🍵"));
+        menu.add(new MenuItem("Hot chocolate", "🍵"));
     }
 
     private void showMenu() {
@@ -32,23 +37,111 @@ public class GameplayManager {
     }
 
     public void playTutorial() {
-        System.out.println("\n --- Tutorial gameplay --- \n");
+        boolean allStagesPerfect = false;
 
-        List<MenuItem> customerOrder = new ArrayList<>();
-        customerOrder.add(menu.get(0)); // Latte
+        while (!allStagesPerfect) {
+        System.out.println("\n --- Tutorial - 3 Stages ---");
 
-        Customer customer = new Customer("Luna", customerOrder);
+        String lunaIntro = "Hey again! I want to be your first customer to prepare you before the real ones arrive. Don't be scared if anything goes wrong!";
+        String lunaSuccess = "Great job! You're ready for the real customers now!";
+        String lunaFail = "Don't worry, just take a deep breath and try again!";
+
+        String garfieldIntro = "Yo, just make me something tasty, yeah? No pressure though, I'm easy!";
+        String garfieldSuccess = "Yooo, that's fire! You're the cat!";
+        String garfieldFail = "Eh, all good bro. Just retry, I got time.";
+
+        String tomIntro = "Hi. Doesn't matter if it's your first or last day, I just want my coffee to be good.";
+        String tomSuccess = "Impressive. You actually know what you're doing.";
+        String tomFail = "That's not it. Try harder next time.";
+
+        String[][] dialogues = {
+                {lunaIntro, lunaSuccess, lunaFail},
+                {garfieldIntro, garfieldSuccess, garfieldFail},
+                {tomIntro, tomSuccess, tomFail}
+        };
+
+        String[] customerNames = {"Luna", "Garfield", "Tom"};
+        int[] itemCounts = {1, 2, 3};
+
+        allStagesPerfect = true;
+
+        for (int stage = 0; stage < 3; stage++) {
+
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("\n --- Stage " + (stage + 1) + " ---\n");
+            List<MenuItem> customerOrder = generateRandomOrder(itemCounts[stage]);
+
+            Customer customer = new Customer(
+                    customerNames[stage],
+                    customerOrder,
+                    dialogues[stage][0],  // intro
+                    dialogues[stage][1],  // success
+                    dialogues[stage][2]   // fail
+            );
+
+            playOneRound(customer, customerOrder);
+
+            if (!player.isTutorialCompleted()) {
+                allStagesPerfect = false;
+            }
+        }
+
+        if (allStagesPerfect) {
+            System.out.println("\n--- All stages completed PERFECTLY! ---\n");
+            player.completeTutorial();
+        } else {
+            System.out.println("\n--- Some stages were not perfect! Let's try again! ---\n");
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println(" Restarting tutorial...\n");
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        }
+    }
+
+    private boolean playOneRound(Customer customer, List<MenuItem> customerOrder) {
         boolean success = false;
+        boolean isPerfect = false;
 
-        while(!success) {
+        while (!success) {
+            customer.speakIntro();
 
-            customer.speak();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.print("\n" + customer.getName() + " wants: ");
+            for (int i = 0; i < customerOrder.size(); i++) {
+                System.out.print(customerOrder.get(i));
+                if (i < customerOrder.size() - 1) {
+                    System.out.print(" and ");
+                }
+            }
+            System.out.println("\n");
+
             showMenu();
 
             Order playerOrder = new Order();
 
             while (true) {
-                System.out.print("Select item (1-4) or 0 to submit: ");
+                System.out.print("Select item (1-" + menu.size() + ") or 0 to submit: ");
                 int choice = scanner.nextInt();
                 scanner.nextLine();
 
@@ -67,11 +160,20 @@ public class GameplayManager {
 
             if (checkOrder(customerOrder, playerOrder)) {
                 System.out.println("\n Perfect! 100% accurate!");
+                customer.speakSuccess();
                 System.out.println("+5 Kitty Tips! ");
-                player.completeTutorial();
+                isPerfect = true;
                 success = true;
+
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
             } else {
                 System.out.println("\n Incorrect order! Try again!");
+                customer.speakFail();
                 System.out.println("Expected: " + customerOrder);
                 System.out.println("You made: " + playerOrder.getItems());
 
@@ -80,17 +182,19 @@ public class GameplayManager {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                System.out.println("\n Let's try again! \n");
+
+                System.out.println("\n Let's try again!\n");
 
                 try {
-                    Thread.sleep(1500);
+                    Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-
         }
+        return isPerfect;
     }
+
     private boolean checkOrder(List<MenuItem> customerOrder, Order playerOrder) {
         List<MenuItem> playerItems = playerOrder.getItems();
 
@@ -100,5 +204,16 @@ public class GameplayManager {
 
         return playerItems.containsAll(customerOrder);
     }
-}
 
+    private List<MenuItem> generateRandomOrder(int itemCount) {
+        List<MenuItem> order = new ArrayList<>();
+
+        for (int i = 0; i < itemCount; i++) {
+            int randomIndex = (int) (Math.random() * menu.size());
+            MenuItem randomItem = menu.get(randomIndex);
+            order.add(randomItem);
+        }
+
+        return order;
+    }
+}

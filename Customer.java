@@ -4,10 +4,16 @@ public class Customer {
 
     private String name;
     private List<MenuItem> order;
+    private String introText;
+    private String successText;
+    private String failText;
 
-    public Customer(String name, List<MenuItem> order) {
+    public Customer(String name, List<MenuItem> order, String introText, String successText, String failText) {
         this.name = name;
         this.order = order;
+        this.introText = introText;
+        this.successText = successText;
+        this.failText = failText;
     }
 
     public String getName() {
@@ -18,18 +24,16 @@ public class Customer {
         return order;
     }
 
-    public void speak() {
-        System.out.print(name + ": Hello! I would like ");
-
-        for (int i = 0; i < order.size(); i++) {
-            System.out.print(order.get(i));
-
-            if (i < order.size() - 1) {
-                System.out.print(" and ");
-            }
-        }
-
-        System.out.println(", please!");
+    public void speakIntro() {
+        System.out.println(name + ": " + introText);
     }
-}
 
+    public void speakSuccess() {
+        System.out.println(name + ": " + successText);
+    }
+
+    public void speakFail() {
+        System.out.println(name + ": " + failText);
+    }
+
+}
