@@ -2,7 +2,8 @@ public class Main {
 
     public static void main(String[] args) {
 
-        TutorialManager tutorialManager = new TutorialManager();
-        tutorialManager.start();
+        GameManager gameManager = new GameManager();
+        gameManager.start();
+        gameManager.showMainMenu();
     }
 }

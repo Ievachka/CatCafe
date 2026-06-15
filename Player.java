@@ -2,10 +2,34 @@ public class Player {
 
     private String username;
     private boolean tutorialCompleted;
+    private int daysCompleted;
+    private int kittyCoin;
 
     public Player() {
         username = "";
         tutorialCompleted = true;
+        daysCompleted = 0;
+        kittyCoin = 0;
+    }
+
+    public void completedDay() {
+        daysCompleted++;
+    }
+
+    public int getDaysCompleted() {
+        return daysCompleted;
+    }
+
+    public int getKittyCoin() {
+        return kittyCoin;
+    }
+
+    public void setKittyCoin(int amount) {
+        this.kittyCoin = amount;
+    }
+
+    public void addKittyCoin(int amount) {
+        this.kittyCoin += amount;
     }
 
     public void setUsername(String username) {

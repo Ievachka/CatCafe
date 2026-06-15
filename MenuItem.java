@@ -1,19 +1,17 @@
 public class MenuItem {
 
     private String name;
-    private String emoji; // later -> sprite
+    private String emoji;
+    private int coinsValue;
 
-    public MenuItem (String name, String emoji) {
+    public MenuItem (String name, String emoji, int coinsValue) {
         this.name = name;
         this.emoji = emoji;
+        this.coinsValue = coinsValue;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getEmoji() {
-        return emoji;
+    public int getCoinsValue() {
+        return coinsValue;
     }
 
     @Override
@@ -21,4 +19,3 @@ public class MenuItem {
         return emoji + " " + name;
     }
 }
-

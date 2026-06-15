@@ -20,10 +20,6 @@ public class Customer {
         return name;
     }
 
-    public List<MenuItem> getOrder() {
-        return order;
-    }
-
     public void speakIntro() {
         System.out.println(name + ": " + introText);
     }
