@@ -11,55 +11,47 @@ import java.util.Map;
 
 public class GamePanel extends JPanel implements MouseListener, MouseMotionListener, KeyListener {
 
-    // ===== Game states =====
     enum GameState { MENU, INTRO, TUTORIAL, DAY_INTRO, PLAYING, DAY_COMPLETE, GAME_OVER }
     private GameState state = GameState.MENU;
 
-    // ===== Progress / flow =====
     private Player profile = new Player();
     private int currentDay = 1;
     private static final int MAX_DAYS = 10;
     private boolean tutorialDone = false;
 
-    // ===== Timers (frames, ~60/sec) =====
     private int introTimer = 0;
     private int dayCompleteTimer = 0;
     private int comingSoonTimer = 0;
 
-    // ===== Tutorial =====
     private int tutorialStage = 0;
     private int lastTutorialSeat = -1;
 
-    // ===== Intro dialogue (job interview) =====
     private final List<Line> introScript = new ArrayList<>();
     private int introIndex = 0;
     private Rectangle choiceA, choiceB;
 
-    // ===== Day bookkeeping =====
     private int dayGoal = 0, dayCoins = 0, dayCustomersServed = 0, dayCustomersSpawned = 0, dayBonus = 0;
     private boolean dayHadFail = false;
     private boolean dayPassed = false;
     private int spawnTimer = 0;
-    private int spawnDelay = 150;                          // ~2.5s between arrivals
-    private static final int DAY_CUSTOMER_LIMIT = 10;      // max cats per day
-    private static final int PATIENCE_STEP = 60;           // patience lost per day (~1s)
-    private static final int MIN_PATIENCE = 240;           // floor (~4s)
-    private static final int TUTORIAL_PATIENCE = 999999;   // effectively no timeout
+    private int spawnDelay = 150;
+    private static final int DAY_CUSTOMER_LIMIT = 10;
+    private static final int PATIENCE_STEP = 60;
+    private static final int MIN_PATIENCE = 240;
+    private static final int TUTORIAL_PATIENCE = 999999;
 
-    // ===== Menu layout =====
     private int mouseX = 0, mouseY = 0;
     private int btnX = 130, btnW = 540, btnH = 100;
     private int startY = 310, shopY = 450, exitY = 590;
 
-    // ===== World =====
     private Chef chef;
     private final List<MenuItem> menu = ItemLibrary.getAllItems();
     private final List<Customer> seats = new ArrayList<>();
     private final List<Station> stations = new ArrayList<>();
     private int interactionRange = 70;
 
-    // ===== Images =====
-    private BufferedImage menuBg, menuStartBg, menuShopBg, menuExitBg, cafeBg, customerSprite;
+    private BufferedImage menuBg, menuStartBg, menuShopBg, menuExitBg, cafeBg;
+    private final List<BufferedImage> customerSprites = new ArrayList<>();
     private final Map<String, BufferedImage> itemSprites = new HashMap<>();
 
     private Timer gameLoopTimer;
@@ -72,11 +64,10 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
         chef = new Chef(350, 350, 128, 8, "/images/spritesheet.png", 28, 1);
 
-        // Seats placed on the 4 tables of cafe1.png (size 96, biased to the front edge for bubble room).
-        seats.add(new Customer(70, 150, 96));    // top-left table
-        seats.add(new Customer(605, 150, 96));   // top-right table
-        seats.add(new Customer(130, 400, 96));   // middle-left table
-        seats.add(new Customer(615, 430, 96));   // bottom-right table
+        seats.add(new Customer(70, 150, 96));
+        seats.add(new Customer(605, 150, 96));
+        seats.add(new Customer(130, 400, 96));
+        seats.add(new Customer(615, 430, 96));
 
         loadImages();
         buildStations();
@@ -87,15 +78,23 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
     private void loadImages() {
         try {
-            menuBg         = ImageIO.read(getClass().getResourceAsStream("/images/menu1.png"));
-            menuStartBg    = ImageIO.read(getClass().getResourceAsStream("/images/menuStart.png"));
-            menuShopBg     = ImageIO.read(getClass().getResourceAsStream("/images/menuShop.png"));
-            menuExitBg     = ImageIO.read(getClass().getResourceAsStream("/images/menuExit.png"));
-            cafeBg         = ImageIO.read(getClass().getResourceAsStream("/images/cafe1.png"));
-            customerSprite = ImageIO.read(getClass().getResourceAsStream("/images/customer.png"));
+            menuBg = ImageIO.read(getClass().getResourceAsStream("/images/menu1.png"));
+            menuStartBg = ImageIO.read(getClass().getResourceAsStream("/images/menuStart.png"));
+            menuShopBg = ImageIO.read(getClass().getResourceAsStream("/images/menuShop.png"));
+            menuExitBg = ImageIO.read(getClass().getResourceAsStream("/images/menuExit.png"));
+            cafeBg = ImageIO.read(getClass().getResourceAsStream("/images/cafe1.png"));
         } catch (IOException e) {
             System.err.println("Error loading background images!");
         }
+
+        for (int i = 1; i <= 4; i++) {
+            try {
+                customerSprites.add(ImageIO.read(getClass().getResourceAsStream("/images/cat" + i + ".png")));
+            } catch (IOException e) {
+                System.err.println("Error loading cat" + i + ".png");
+            }
+        }
+
         for (MenuItem m : menu) {
             try {
                 itemSprites.put(m.getSpriteFile(),
@@ -113,20 +112,17 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         }
     }
 
-    // ============================================================
-    //  UPDATE
-    // ============================================================
     private void updateGame() {
         if (comingSoonTimer > 0) comingSoonTimer--;
 
         switch (state) {
-            case MENU:                                break;
-            case INTRO:                               break;  // advances on click
-            case TUTORIAL:     updateTutorial();      break;
-            case DAY_INTRO:    updateDayIntro();      break;
-            case PLAYING:      updatePlaying();       break;
-            case DAY_COMPLETE: updateDayComplete();   break;
-            case GAME_OVER:                           break;
+            case MENU: break;
+            case INTRO: break;
+            case TUTORIAL: updateTutorial(); break;
+            case DAY_INTRO: updateDayIntro(); break;
+            case PLAYING: updatePlaying(); break;
+            case DAY_COMPLETE: updateDayComplete(); break;
+            case GAME_OVER: break;
         }
     }
 
@@ -140,7 +136,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
     private void updateDayIntro() {
         introTimer++;
-        if (introTimer > 120) {            // ~2s
+        if (introTimer > 120) {
             introTimer = 0;
             startDay();
         }
@@ -153,7 +149,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
             c.update();
             if (c.hasLostPatience()) {
                 dayHadFail = true;
-                c.startLeaving(c.getFailText(), false);   // fail bubble shows above them
+                c.startLeaving(c.getFailText(), false);
             }
             if (c.shouldDisappear()) c.disappear();
         }
@@ -173,22 +169,19 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
     private void updateDayComplete() {
         dayCompleteTimer++;
-        if (dayCompleteTimer > 240) {      // ~4s
+        if (dayCompleteTimer > 240) {
             dayCompleteTimer = 0;
             if (dayPassed) {
                 currentDay++;
                 if (currentDay > MAX_DAYS) state = GameState.GAME_OVER;
                 else { state = GameState.DAY_INTRO; introTimer = 0; }
             } else {
-                state = GameState.DAY_INTRO;   // repeat the same day
+                state = GameState.DAY_INTRO;
                 introTimer = 0;
             }
         }
     }
 
-    // ============================================================
-    //  DAY / TUTORIAL FLOW
-    // ============================================================
     private void startDay() {
         dayGoal = currentDay * 10;
         dayCoins = 0;
@@ -208,7 +201,8 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
             if (!c.isActive()) {
                 int n = Math.min(1 + currentDay / 2, 4);
                 CharacterData who = randomCharacter();
-                c.seat(who, generateRandomOrder(n), effectivePatience(who.getBasePatience()));
+                int spriteIdx = (int) (Math.random() * customerSprites.size());
+                c.seat(who, generateRandomOrder(n), effectivePatience(who.getBasePatience()), spriteIdx);
                 dayCustomersSpawned++;
                 return;
             }
@@ -249,18 +243,16 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
     private void seatTutorialCustomer() {
         CharacterData who = (tutorialStage == 0)
-                ? CharacterLibrary.getAllCharacters().get(0)   // Luna is always first
+                ? CharacterLibrary.getAllCharacters().get(0)
                 : randomCharacter();
-        int n = tutorialStage + 1;                              // 1, 2, 3 items
+        int n = tutorialStage + 1;
         int idx;
         do { idx = (int) (Math.random() * seats.size()); } while (seats.size() > 1 && idx == lastTutorialSeat);
         lastTutorialSeat = idx;
-        seats.get(idx).seat(who, generateRandomOrder(n), TUTORIAL_PATIENCE);
+        int spriteIdx = (int) (Math.random() * customerSprites.size());
+        seats.get(idx).seat(who, generateRandomOrder(n), TUTORIAL_PATIENCE, spriteIdx);
     }
 
-    // ============================================================
-    //  INTRO DIALOGUE
-    // ============================================================
     private void startIntro() {
         buildIntroScript();
         introIndex = 0;
@@ -293,8 +285,8 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
     private void handleIntroClick(int mx, int my) {
         Line line = introScript.get(introIndex);
         if (line.isChoice) {
-            if (choiceA != null && choiceA.contains(mx, my)) advanceIntro();        // accept
-            else if (choiceB != null && choiceB.contains(mx, my)) state = GameState.MENU; // decline
+            if (choiceA != null && choiceA.contains(mx, my)) advanceIntro();
+            else if (choiceB != null && choiceB.contains(mx, my)) state = GameState.MENU;
         } else {
             advanceIntro();
         }
@@ -307,9 +299,6 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         }
     }
 
-    // ============================================================
-    //  INTERACTION
-    // ============================================================
     private void handleInteract() {
         if (!chef.isTrayEmpty()) {
             for (Customer c : seats) {
@@ -334,7 +323,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         if (state == GameState.TUTORIAL) {
             if (correct) {
                 c.serve();
-                c.startLeaving(c.getSuccessText(), true);   // success bubble above the cat
+                c.startLeaving(c.getSuccessText(), true);
                 tutorialStage++;
                 if (tutorialStage >= 3) {
                     tutorialDone = true;
@@ -345,7 +334,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
                     seatTutorialCustomer();
                 }
             } else {
-                c.react(c.getFailText(), false);            // fail bubble, cat stays to retry
+                c.react(c.getFailText(), false);
             }
             return;
         }
@@ -357,9 +346,9 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
             profile.addKittyCoin(coins);
             dayCoins += coins;
             dayCustomersServed++;
-            c.startLeaving(c.getSuccessText(), true);     // success bubble shows above them
+            c.startLeaving(c.getSuccessText(), true);
         } else {
-            c.react(c.getFailText(), false);              // wrong order: bubble, stays to retry
+            c.react(c.getFailText(), false);
         }
     }
 
@@ -391,20 +380,17 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         return Math.abs(pcx - ccx) < interactionRange && Math.abs(pcy - ccy) < interactionRange;
     }
 
-    // ============================================================
-    //  RENDER
-    // ============================================================
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         switch (state) {
-            case MENU:         drawMenu(g);          break;
-            case INTRO:        drawIntro(g);         break;
-            case TUTORIAL:     drawTutorial(g);      break;
-            case DAY_INTRO:    drawDayIntro(g);      break;
-            case PLAYING:      drawPlaying(g);       break;
-            case DAY_COMPLETE: drawDayComplete(g);   break;
-            case GAME_OVER:    drawGameOver(g);      break;
+            case MENU: drawMenu(g); break;
+            case INTRO: drawIntro(g); break;
+            case TUTORIAL: drawTutorial(g); break;
+            case DAY_INTRO: drawDayIntro(g); break;
+            case PLAYING: drawPlaying(g); break;
+            case DAY_COMPLETE: drawDayComplete(g); break;
+            case GAME_OVER: drawGameOver(g); break;
         }
         if (comingSoonTimer > 0) drawComingSoon(g);
     }
@@ -419,12 +405,12 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
 
     private void drawMenu(Graphics g) {
         boolean hoverStart = inButton(mouseX, mouseY, startY);
-        boolean hoverShop  = inButton(mouseX, mouseY, shopY);
-        boolean hoverExit  = inButton(mouseX, mouseY, exitY);
+        boolean hoverShop = inButton(mouseX, mouseY, shopY);
+        boolean hoverExit = inButton(mouseX, mouseY, exitY);
         BufferedImage bg = menuBg;
-        if      (hoverStart && menuStartBg != null) bg = menuStartBg;
-        else if (hoverShop  && menuShopBg  != null) bg = menuShopBg;
-        else if (hoverExit  && menuExitBg  != null) bg = menuExitBg;
+        if (hoverStart && menuStartBg != null) bg = menuStartBg;
+        else if (hoverShop && menuShopBg != null) bg = menuShopBg;
+        else if (hoverExit && menuExitBg != null) bg = menuExitBg;
         if (bg != null) g.drawImage(bg, 0, 0, getWidth(), getHeight(), null);
     }
 
@@ -513,7 +499,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
             drawCentered(g, "Earned " + dayCoins + " / " + dayGoal + " coins", getHeight() / 2 - 10);
             if (dayBonus > 0) {
                 g.setColor(new Color(120, 220, 140));
-                drawCentered(g, "All accurate!  Kitty Tips +" + dayBonus, getHeight() / 2 + 20);
+                drawCentered(g, "All accurate! Kitty Tips +" + dayBonus, getHeight() / 2 + 20);
             }
             g.setColor(Color.WHITE);
             drawCentered(g, "Balance: " + profile.getKittyCoin() + " Kitty Coins", getHeight() / 2 + 55);
@@ -541,7 +527,6 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         drawCentered(g, "Click to return to the menu", getHeight() / 2 + 45);
     }
 
-    // ----- HUD panel -----
     private void drawTopPanel(Graphics g, String big, String small) {
         int px = 12, py = 10, pw = 270, ph = 60;
         g.setColor(new Color(0, 0, 0, 175));
@@ -604,22 +589,27 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
             float alpha = c.isLeaving() ? Math.max(0f, 1f - c.getLeaveTimer() / 120f) : 1f;
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            if (customerSprite != null)
-                g2.drawImage(customerSprite, c.getX(), c.getY(), c.getSize(), c.getSize(), null);
+            
+            int spriteIdx = c.getSpriteIndex();
+            if (spriteIdx >= 0 && spriteIdx < customerSprites.size()) {
+                BufferedImage sprite = customerSprites.get(spriteIdx);
+                if (sprite != null)
+                    g2.drawImage(sprite, c.getX(), c.getY(), c.getSize(), c.getSize(), null);
+            }
             g2.dispose();
 
             if (c.isLeaving() && c.getLeaveMessage() != null) {
                 Color accent = c.leftHappy() ? new Color(40, 150, 70) : new Color(200, 60, 60);
-                drawSpeechBubble(g, c, c.getName(), c.getLeaveMessage(), accent);   // success/fail line
+                drawSpeechBubble(g, c, c.getName(), c.getLeaveMessage(), accent);
             } else if (c.hasReaction()) {
                 Color accent = c.reactionHappy() ? new Color(40, 150, 70) : new Color(200, 60, 60);
-                drawSpeechBubble(g, c, c.getName(), c.getReactionText(), accent);   // wrong-order reaction
+                drawSpeechBubble(g, c, c.getName(), c.getReactionText(), accent);
                 if (c.getPatience() < 90000) drawPatienceBar(g, c);
             } else if (c.isGreeting()) {
-                drawSpeechBubble(g, c, c.getName(), c.getIntroText(), new Color(120, 90, 40));  // intro first
+                drawSpeechBubble(g, c, c.getName(), c.getIntroText(), new Color(120, 90, 40));
             } else if (!c.isServed()) {
                 if (c.getPatience() < 90000) drawPatienceBar(g, c);
-                drawOrderBubble(g, c);                                   // then the order
+                drawOrderBubble(g, c);
                 drawNameTag(g, c, c.getY() - 94);
             }
         }
@@ -651,7 +641,6 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         }
     }
 
-    // Speech bubble (intro / success / fail) above the customer, wrapped, clamped on screen.
     private void drawSpeechBubble(Graphics g, Customer c, String name, String text, Color accent) {
         g.setFont(new Font("Arial", Font.PLAIN, 12));
         FontMetrics fm = g.getFontMetrics();
@@ -664,7 +653,7 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         int cx = c.getX() + c.getSize() / 2;
         int x = Math.max(6, Math.min(cx - w / 2, getWidth() - w - 6));
         int y = c.getY() - 8 - h;
-        if (y < 6) y = c.getY() + c.getSize() + 8;   // no room above -> draw below
+        if (y < 6) y = c.getY() + c.getSize() + 8;
 
         g.setColor(new Color(255, 255, 255, 238));
         g.fillRoundRect(x, y, w, h, 10, 10);
@@ -714,9 +703,6 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         drawCentered(g, "Shop - Coming soon!", y + 44);
     }
 
-    // ============================================================
-    //  INPUT
-    // ============================================================
     @Override
     public void mouseClicked(MouseEvent e) {
         if (state == GameState.MENU) {
@@ -763,16 +749,13 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
     @Override public void keyReleased(KeyEvent e) { chef.keyReleased(e); }
     @Override public void keyTyped(KeyEvent e) {}
 
-    @Override public void mouseMoved(MouseEvent e)   { mouseX = e.getX(); mouseY = e.getY(); }
+    @Override public void mouseMoved(MouseEvent e) { mouseX = e.getX(); mouseY = e.getY(); }
     @Override public void mouseDragged(MouseEvent e) {}
     @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e){}
+    @Override public void mouseReleased(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e)  {}
+    @Override public void mouseExited(MouseEvent e) {}
 
-    // ============================================================
-    //  Helpers
-    // ============================================================
     private boolean inButton(int mx, int my, int topY) {
         return mx >= btnX && mx <= btnX + btnW && my >= topY && my <= topY + btnH;
     }
@@ -800,10 +783,6 @@ public class GamePanel extends JPanel implements MouseListener, MouseMotionListe
         return out;
     }
 
-    private Color okGreen() { return new Color(90, 220, 130); }
-    private Color failRed() { return new Color(240, 100, 100); }
-
-    // ===== Intro dialogue line =====
     private static class Line {
         final String speaker, text;
         final boolean isChoice;

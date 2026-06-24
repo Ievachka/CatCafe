@@ -1,3 +1,13 @@
+/*=========================================================================================
+ *Group project: CAT CAFE
+ *
+ *Authors: Ieva Vinkevičiūtė, Augustė Kerulytė
+ *
+ *University: VU MIF Informacinės Technologijos
+ *
+ *=========================================================================================
+*/
+
 import javax.swing.JFrame;
 
 public class Main {

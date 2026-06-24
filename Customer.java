@@ -10,7 +10,7 @@ public class Customer {
     private List<MenuItem> order;
 
     private int x, y, size;
-    private int spriteIndex;
+    private int spriteIndex; // Stores which cat PNG to use (0 to 3)
 
     private boolean active  = false;
     private boolean served  = false;
@@ -38,13 +38,15 @@ public class Customer {
         this.size = size;
     }
 
-    public void seat(CharacterData who, List<MenuItem> order, int patience) {
+    // UPDATED: Added 'int spriteIndex' to the parameters
+    public void seat(CharacterData who, List<MenuItem> order, int patience, int spriteIndex) {
         this.name        = who.getName();
         this.introText   = who.getIntroText();
         this.successText = who.getSuccessText();
         this.failText    = who.getFailText();
         this.order       = order;
         this.patience    = patience;
+        this.spriteIndex = spriteIndex; // Assign the random cat sprite
 
         this.active     = true;
         this.served     = false;
@@ -55,7 +57,6 @@ public class Customer {
         this.leaveMessage = null;
         this.reactionTimer = 0;
         this.reactionText = null;
-        this.spriteIndex = 0;
     }
 
     public void update() {
@@ -79,9 +80,13 @@ public class Customer {
         return leaving && leaveTimer >= 150; // ~2.5s, gives the bubble time to show
     }
 
-    public void serve() { if (active && !served) served = true; }
+    public void serve() { 
+        if (active && !served) served = true; 
+    }
 
-    public void startLeaving() { startLeaving(null, false); }
+    public void startLeaving() { 
+        startLeaving(null, false); 
+    }
 
     public void startLeaving(String message, boolean happy) {
         leaving = true;
@@ -97,11 +102,19 @@ public class Customer {
     }
 
     public void disappear() {
-        active = false; served = false; leaving = false;
-        introTimer = 0; waitTime = 0; leaveTimer = 0;
-        leaveMessage = null; reactionTimer = 0; reactionText = null; order = null;
+        active = false; 
+        served = false; 
+        leaving = false;
+        introTimer = 0; 
+        waitTime = 0; 
+        leaveTimer = 0;
+        leaveMessage = null; 
+        reactionTimer = 0; 
+        reactionText = null; 
+        order = null;
     }
 
+    // Getters
     public String getName()         { return name; }
     public String getIntroText()    { return introText; }
     public String getSuccessText()  { return successText; }
@@ -112,14 +125,18 @@ public class Customer {
     public boolean hasReaction()    { return reactionTimer > 0; }
     public String getReactionText() { return reactionText; }
     public boolean reactionHappy()  { return reactionHappy; }
-    public int getX()           { return x; }
-    public int getY()           { return y; }
-    public int getSize()        { return size; }
-    public int getSpriteIndex() { return spriteIndex; }
-    public int getWaitTime()    { return waitTime; }
-    public int getPatience()    { return patience; }
-    public int getLeaveTimer()  { return leaveTimer; }
-    public boolean isActive()   { return active; }
-    public boolean isServed()   { return served; }
-    public boolean isLeaving()  { return leaving; }
+    
+    public int getX()               { return x; }
+    public int getY()               { return y; }
+    public int getSize()            { return size; }
+    
+    // NEW: Getter for the sprite index so GamePanel knows which cat to draw
+    public int getSpriteIndex()     { return spriteIndex; }
+    
+    public int getWaitTime()        { return waitTime; }
+    public int getPatience()        { return patience; }
+    public int getLeaveTimer()      { return leaveTimer; }
+    public boolean isActive()       { return active; }
+    public boolean isServed()       { return served; }
+    public boolean isLeaving()      { return leaving; }
 }
